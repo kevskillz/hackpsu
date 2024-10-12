@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event and Assignment Scheduler</title>
+</head>
+<body>
+    <h1>Event and Assignment Scheduler</h1>
+    <form method="POST">
+        <h2>Calendar Events (fixed):</h2>
+        <textarea name="calendar_events" rows="10" cols="50" required>{{ calendar_events }}</textarea>
+
+        <h2>Assignments (to be optimized):</h2>
+        <textarea name="assignments" rows="10" cols="50" required>{{ assignments }}</textarea>
+
+        <button type="submit">Generate Schedule</button>
+    </form>
+
+    {% if response %}
+        <h2>Optimized Schedule:</h2>
+        <pre>{{ response }}</pre>
+    {% endif %}
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html>
