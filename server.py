@@ -208,14 +208,12 @@ def schedule():
 
     calendar_events_input = data.get('calendar_events')
     assignments_input = data.get('assignments')
-    from datetime import datetime
 
     # Current datetime
-    current_datetime = datetime.now().isoformat()
     if calendar_events_input and assignments_input:
         prompt = f"""
         You are a scheduling assistant. Given the following calendar events and assignments, generate an optimal schedule of events.
-        It is currenly {current_datetime}.
+        It is currenly 10/21/2024.
 
         Calendar Events (fixed):
         {calendar_events_input}
@@ -230,6 +228,7 @@ def schedule():
         - Each event/assignment should only appear once in the generated schedule.
 
         Return an optimized schedule of assignments & calendar events with the following format without any other text. Ensure each id is only showing up ONCE.
+        only return this array and nothing else.
         [{{ "id": , "title": , "start": , "end":,}},... ]
         """
         
@@ -238,6 +237,32 @@ def schedule():
         return jsonify(response.replace('\n', '').replace('    ','')), 200
     else:
         return jsonify({'error': 'Please provide valid calendar events and assignments!'}), 400
+    
+@app.route('/chatbot', methods=['GET', 'POST'])
+def chatbot():
+    data = request.json
+    user_input = data.get('user_input')
+    schedule_input = data.get('schedule')  # Passing the schedule as an argument in the request
+    print(data)
+    if not user_input:
+        
+        return jsonify({'error': 'No user input provided'}), 400
 
+    # if not schedule_input:
+    #     return jsonify({'error': 'No schedule provided!'}), 400
+
+    # Include the passed schedule in the chatbot's prompt
+    prompt = f"""
+    You are a helpful scheduling assistant. The current schedule is as follows:
+    
+    {schedule_input}
+
+    Based on the current schedule, answer the following user question:
+    {user_input}
+    """
+
+    response = get_chat_completion(prompt)
+    print(response)
+    return jsonify({'response': response}), 200
 if __name__ == '__main__':
     app.run(debug=True)

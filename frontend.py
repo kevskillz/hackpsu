@@ -7,9 +7,9 @@ from ics import Calendar
 
 
 # Set page configuration
-st.set_page_config(page_title="TimeTicklerAI", page_icon="📆")
-st.markdown("## TimeTicklerAI 📆")
-
+st.set_page_config(page_title="TimeTickler", page_icon="📆")
+st.markdown("## TimeTickler 📆")
+sched = ''
 # Check if the user is logged in
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -29,7 +29,7 @@ if not st.session_state["logged_in"]:
         st.session_state["user"] = username
 
         st.success("Logged in successfully!")
-        st.rerun()  
+        st.rerun()
             
 else:
     def read_ics_file_canvas(file_content):
@@ -49,6 +49,7 @@ else:
             return events_list[:10]
         else: return events_list
     def read_ics_file_google(file_content):
+        
         calendar = Calendar(file_content)
 
         # Process events into a list
@@ -68,7 +69,7 @@ else:
        
         try:
             # Make a POST request to your API to add an event
-            url = f'http://localhost:5000/add_event/{user}'  # Replace with your actual API URL if needed
+            url = f'http://127.0.0.1:5000/add_event/{user}'  # Replace with your actual API URL if needed
             headers = {'Content-Type': 'application/json'}
             response = requests.post(url, json=event, headers=headers)
             
@@ -87,7 +88,7 @@ else:
     def addAssignmentToDB(assignment, user):
         try:
             # Make a POST request to your API to add an assignment
-            url = f'http://localhost:5000/add_assignment/{user}'  # Replace with your actual API URL if needed
+            url = f'http://127.0.0.1:5000/add_assignment/{user}'  # Replace with your actual API URL if needed
             headers = {'Content-Type': 'application/json'}
             response = requests.post(url, json=assignment, headers=headers)
             
@@ -105,7 +106,7 @@ else:
     def getCalendarEventsFromDB(user):
         try:
             # Make a GET request to your API to fetch calendar events
-            url = f'http://localhost:5000/get_events/{user}'  # Replace with your actual API URL if needed
+            url = f'http://127.0.0.1:5000/get_events/{user}'  # Replace with your actual API URL if needed
             response = requests.get(url)
             
             if response.status_code == 200:
@@ -122,7 +123,7 @@ else:
     def getAssignmentsFromUser(user):
         try:
             # Make a GET request to your API to fetch assignments
-            url = f'http://localhost:5000/get_assignments/{user}'  # Replace with your actual API URL if needed
+            url = f'http://127.0.0.1:5000/get_assignments/{user}'  # Replace with your actual API URL if needed
             response = requests.get(url)
             
             if response.status_code == 200:
@@ -154,6 +155,8 @@ else:
                 response = requests.post(url, json=data)
 
                 events = response.json()
+                global sched
+                sched = str(events)
                 if type(events) is str:
                     events = json.loads(events.strip())
 
@@ -163,6 +166,8 @@ else:
                 st.session_state["events"] = events  # Ensure events is always a list
             else:
                 st.session_state["events"] = []
+        st.rerun()
+        
         
     # Initialize events in session state as a list
     if "events" not in st.session_state or not isinstance(st.session_state["events"], list):
@@ -293,5 +298,30 @@ else:
                 st.session_state['events'].append(new_event)
                 st.success("Assignment added!")
 
-    # Display the current state of events
-    st.write("Current Events:", st.session_state["events"])
+     # Chatbot logic
+    def query_chatbot(user_input):
+        url = "http://127.0.0.1:5000/chatbot"  # Adjust the URL based on your actual API
+        global sched
+        payload = {
+            "user_input": user_input,
+            "schedule": sched
+        }
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, json=payload, headers=headers)
+        
+        if response.status_code == 200:
+            return response.json().get("response", "Error: No response from chatbot")
+        else:
+            return f"Error: Failed to connect to chatbot. Status Code: {response.status_code}"
+
+    # Chatbot UI
+    st.markdown("### Ask Tickles, Our Chatbot 🤖")
+    user_question = st.text_input("Ask about your schedule or assignments:")
+    
+    if st.button("Ask Chatbot"):
+        if user_question:
+            with st.spinner('Processing your question...'):
+                chatbot_response = query_chatbot(user_question)
+                st.markdown(f"**Tickles 🤖:** {chatbot_response}")
+        else:
+            st.warning("Please enter a question for the chatbot.")
